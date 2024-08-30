@@ -812,14 +812,14 @@ def _map_color_seg(
         # users wants to plot a categorical column
         if np.any(color_source_vector.isna()):
             cell_id[color_source_vector.isna()] = 0
-        val_im: ArrayLike = map_array(seg, cell_id, color_vector.codes + 1)
+        val_im: ArrayLike = map_array(seg.copy(), cell_id, color_vector.codes + 1)
         cols = colors.to_rgba_array(color_vector.categories)
 
     elif pd.api.types.is_numeric_dtype(color_vector.dtype):
         # user wants to plot a continous column
         if isinstance(color_vector, pd.Series):
             color_vector = color_vector.to_numpy()
-        val_im = map_array(seg, cell_id, color_vector)
+        val_im = map_array(seg.copy(), cell_id, color_vector)
         cols = cmap_params.cmap(cmap_params.norm(color_vector))
 
     else:
