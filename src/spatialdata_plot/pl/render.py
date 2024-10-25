@@ -22,6 +22,7 @@ from spatialdata.models import PointsModel, get_table_keys
 from spatialdata.transformations import (
     set_transformation,
 )
+from spatialdata.transformations.transformations import Identity
 from xarray import DataTree
 
 from spatialdata_plot._logging import logger
@@ -468,7 +469,7 @@ def _render_points(
     if color_source_vector is None and render_params.transfunc is not None:
         color_vector = render_params.transfunc(color_vector)
 
-    _, trans_data = _prepare_transformation(sdata.points[element], coordinate_system, ax)
+    trans, trans_data = _prepare_transformation(sdata.points[element], coordinate_system, ax)
 
     norm = copy(render_params.cmap_params.norm)
 
@@ -491,8 +492,16 @@ def _render_points(
         # use dpi/100 as a factor for cases where dpi!=100
         px = int(np.round(np.sqrt(render_params.size) * (fig_params.fig.dpi / 100)))
 
+        # apply transformations
+        transformed_element = PointsModel.parse(
+            pd.DataFrame(
+                trans.transform_affine(sdata_filt.points[element]), columns=sdata_filt.points[element].columns
+            ),
+            transformations={coordinate_system: Identity()},
+        )
+
         plot_width, plot_height, x_ext, y_ext, factor = _get_extent_and_range_for_datashader_canvas(
-            sdata_filt.points[element], coordinate_system, ax, fig_params
+            transformed_element, coordinate_system, ax, fig_params
         )
 
         # use datashader for the visualization of points
@@ -502,7 +511,7 @@ def _render_points(
         aggregate_with_reduction = None
         if col_for_color is not None and (render_params.groups is None or len(render_params.groups) > 1):
             if color_by_categorical:
-                agg = cvs.points(sdata_filt.points[element], "x", "y", agg=ds.by(col_for_color, ds.count()))
+                agg = cvs.points(transformed_element, "x", "y", agg=ds.by(col_for_color, ds.count()))
             else:
                 reduction_name = render_params.ds_reduction if render_params.ds_reduction is not None else "sum"
                 logger.info(
@@ -510,12 +519,12 @@ def _render_points(
                     "to the matplotlib result."
                 )
                 agg = _datashader_aggregate_with_function(
-                    render_params.ds_reduction, cvs, sdata_filt.points[element], col_for_color, "points"
+                    render_params.ds_reduction, cvs, transformed_element, col_for_color, "points"
                 )
                 # save min and max values for drawing the colorbar
                 aggregate_with_reduction = (agg.min(), agg.max())
         else:
-            agg = cvs.points(sdata_filt.points[element], "x", "y", agg=ds.count())
+            agg = cvs.points(transformed_element, "x", "y", agg=ds.count())
 
         if norm.vmin is not None or norm.vmax is not None:
             norm.vmin = np.min(agg) if norm.vmin is None else norm.vmin
