@@ -523,7 +523,7 @@ def _render_points(
         # apply transformations
         transformed_element = PointsModel.parse(
             trans.transform(sdata_filt.points[element][["x", "y"]]),
-            annotation=sdata_filt.points[element][sdata_filt.points[element].columns.drop(["x", "y"])],
+            annotation=sdata_filt.points[element][sdata_filt.points[element].columns.drop(["x", "y"])].compute(),
             transformations={coordinate_system: Identity()},
         )
 
