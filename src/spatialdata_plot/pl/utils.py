@@ -2073,7 +2073,7 @@ def _get_extent_and_range_for_datashader_canvas(
 
 def _create_image_from_datashader_result(
     ds_result: ds.transfer_functions.Image, factor: float, ax: Axes
-) -> tuple[MaskedArray[np.float64, Any], matplotlib.transforms.Transform]:
+) -> tuple[MaskedArray[tuple[int, ...], Any], matplotlib.transforms.Transform]:
     # create SpatialImage from datashader output to get it back to original size
     rgba_image_data = ds_result.to_numpy().base
     rgba_image_data = np.transpose(rgba_image_data, (2, 0, 1))
