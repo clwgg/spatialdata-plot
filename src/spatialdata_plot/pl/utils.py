@@ -795,7 +795,7 @@ def _set_color_source_vec(
             raise ValueError("Unable to create color palette.")
 
         # do not rename categories, as colors need not be unique
-        color_vector = color_source_vector.map(color_mapping)
+        color_vector = pd.Categorical(color_source_vector.map(color_mapping))
 
         return color_source_vector, color_vector, True
 
